@@ -13,9 +13,9 @@ import matplotlib
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 
-k = 100
-lam = 0.01
-alpha = 0.1
+k = 50
+lmd = 0.01
+alpha = 0.01
 
 def load_train_data(filename):
     '''
@@ -84,17 +84,21 @@ def plot_fig(y, title):
     plt.savefig(title + '.png')
 
 if __name__ == '__main__':
+    begin = time.time()
     score, user_id, indicate = load_train_data(r'./data/netflix_train.txt')
     test_set = load_test_data(user_id, r'./data/netflix_test.txt')
-    u = np.ones((10000, k))
-    v = np.ones((10000, k))
+    end = time.time()
+    print('Time spent on loading data: %f seconds\n' % (end - begin))
 
+    begin = time.time()
+    u = np.random.random((10000, k))
+    v = np.random.random((10000, k))
     target_vec, rmse_vec = [], []
     hadamard_func = lambda indicate, u, v, score: indicate * (np.dot(u, v.T) - score)
     last_j = 0
     while True:
         h_product = hadamard_func(indicate, u, v, score)
-        j = 0.5 * np.linalg.norm(h_product) ** 2 + lam * (np.linalg.norm(u) ** 2 + np.linalg.norm(v) ** 2)
+        j = 0.5 * np.linalg.norm(h_product) ** 2 + lmd * (np.linalg.norm(u) ** 2 + np.linalg.norm(v) ** 2)
         if j > last_j and last_j != 0:
             break
         last_j = j
@@ -104,10 +108,12 @@ if __name__ == '__main__':
         print('RMSE: %f' % rmse_now)
         rmse_vec.append(rmse_now)
         
-        gradient_u = np.dot(h_product, v) + 2 * lam * u
-        gradient_v = np.dot(h_product.T, u) + 2 * lam * v
+        gradient_u = np.dot(h_product, v) + 2 * lmd * u
+        gradient_v = np.dot(h_product.T, u) + 2 * lmd * v
         u -= alpha * u
         v -= alpha * v
-    
+    end = time.time()
+    print('Time spent on iteration: %f seconds\n' % (end - begin))
+
     plot_fig(target_vec, 'ObjectiveFunction')
     plot_fig(rmse_vec, 'RMSE')
